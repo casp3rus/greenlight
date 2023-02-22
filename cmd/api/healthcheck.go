@@ -7,7 +7,7 @@ import (
 
 func (app *appllication) healthcheckHandler(w http.ResponseWriter, r *http.Request) {
 	js := `{"status": "available", "environment": %q, "version": %q}`
-	js = fmt.Sprint(js, app.config.env, version)
+	js = fmt.Sprintf(js, app.config.env, version)
 
 	w.Header().Set("Content-Type", "application/json")
 
