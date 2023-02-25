@@ -2,8 +2,6 @@ package validator
 
 import (
 	"regexp"
-
-	"golang.org/x/text/message"
 )
 
 // Regular expression for sanity checking the format of email addresses,
