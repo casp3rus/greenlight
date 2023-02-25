@@ -16,7 +16,6 @@ type Movie struct {
 	Version   int32     `json:"version"`           // The version number (starts at 1 and increments each time the movie info is updated)
 }
 
-
 func ValidateMovie(v *validator.Validator, movie *Movie) {
 	v.Check(movie.Title != "", "title", "must be provided")
 	v.Check(len(movie.Title) <= 500, "title", "must not be more than 500 bytes long")
