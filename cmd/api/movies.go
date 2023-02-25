@@ -10,10 +10,10 @@ import (
 
 func (app *appllication) createMovieHandler(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Title string `json:"title"`
-		Year int32 `json:"year"`
-		Runtime int32 `json:"runtime"`
-		Genres []string `json:"genres"`
+		Title   string       `json:"title"`
+		Year    int32        `json:"year"`
+		Runtime data.Runtime `json:"runtime"`
+		Genres  []string     `json:"genres"`
 	}
 
 	err := app.readJSON(w, r, &input)
@@ -25,7 +25,7 @@ func (app *appllication) createMovieHandler(w http.ResponseWriter, r *http.Reque
 	fmt.Fprintf(w, "%+v\n", input)
 }
 
-func (app *appllication) showMovieHandler(w http.ResponseWriter, r *http.Request)  {
+func (app *appllication) showMovieHandler(w http.ResponseWriter, r *http.Request) {
 	id, err := app.readIDParam(r)
 	if err != nil {
 		app.notFoundResponse(w, r)
@@ -33,12 +33,12 @@ func (app *appllication) showMovieHandler(w http.ResponseWriter, r *http.Request
 	}
 
 	movie := data.Movie{
-		ID: id,
+		ID:        id,
 		CreatedAt: time.Now(),
-		Title: "Casablanca",
-		Runtime: 102,
-		Genres: []string{"drama", "romance", "war"},
-		Version: 1,
+		Title:     "Casablanca",
+		Runtime:   102,
+		Genres:    []string{"drama", "romance", "war"},
+		Version:   1,
 	}
 
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
