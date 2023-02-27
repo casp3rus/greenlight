@@ -76,12 +76,14 @@ func (app *appllication) showMovieHandler(w http.ResponseWriter, r *http.Request
 }
 
 func (app *appllication) updateMovieHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the movie ID from the URL.
 	id, err := app.readIDParam(r)
 	if err != nil {
 		app.notFoundResponse(w, r)
 		return
 	}
 
+	// Fetch the existing movie from the database.
 	movie, err := app.models.Movies.Get(id)
 	if err != nil {
 		switch {
@@ -93,6 +95,7 @@ func (app *appllication) updateMovieHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Declare an input struct to hold the expected data from the client.
 	var input struct {
 		Title   string       `json:"title"`
 		Year    int32        `json:"year"`
@@ -100,17 +103,20 @@ func (app *appllication) updateMovieHandler(w http.ResponseWriter, r *http.Reque
 		Genres  []string     `json:"genres"`
 	}
 
+	// Read the JSON request body data into the input struct.
 	err = app.readJSON(w, r, &input)
 	if err != nil {
 		app.badRequestResponse(w, r, err)
 		return
 	}
 
+	// Copy the values from the request body to the appropriate fields of the movie record.
 	movie.Title = input.Title
 	movie.Year = input.Year
 	movie.Runtime = input.Runtime
 	movie.Genres = input.Genres
 
+	// Validate the updated movie record.
 	v := validator.New()
 
 	if data.ValidateMovie(v, movie); !v.Valid() {
@@ -118,13 +124,43 @@ func (app *appllication) updateMovieHandler(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	// Write the updated movie record to our Update() method.
 	err = app.models.Movies.Update(movie)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 		return
 	}
 
+	// Write the updated movie record in a JSON response.
 	err = app.writeJSON(w, http.StatusOK, envelope{"movie": movie}, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
+
+func (app *appllication) deleteMovieHandler(w http.ResponseWriter, r *http.Request) {
+	// Extract the movie ID from the URL.
+	id, err := app.readIDParam(r)
+	if err != nil {
+		app.notFoundResponse(w, r)
+		return
+	}
+
+	// Delete the movie from the DB, sending a 404 Not Found response to the client
+	// if there isn't a matching record.
+	err = app.models.Movies.Delete(id)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// Return a 200 OK status code along with a success message.
+	err = app.writeJSON(w, http.StatusOK, envelope{"message": "movie successfully deleted"},nil)
 	if err != nil {
 		app.serverErrorResponse(w, r, err)
 	}
