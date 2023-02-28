@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/casp3rus/greenlight/internal/data"
 	"github.com/casp3rus/greenlight/internal/validator"
@@ -93,6 +94,15 @@ func (app *appllication) updateMovieHandler(w http.ResponseWriter, r *http.Reque
 			app.serverErrorResponse(w, r, err)
 		}
 		return
+	}
+
+	// If the request contains a X-Expected-Version header, verify that the movie
+	// version in the db matches the expected version specified in the header.
+	if r.Header.Get("X-Expected-Version") != "" {
+		if strconv.FormatInt(int64(movie.Version), 32) != r.Header.Get("X-Expected-Version") {
+			app.editConflictResponse(w, r)
+			return
+		}
 	}
 
 	// Declare an input struct to hold the expected data from the client.
