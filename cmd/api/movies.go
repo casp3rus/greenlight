@@ -210,11 +210,12 @@ func (app *appllication) listMoviesHandler(w http.ResponseWriter, r *http.Reques
 	input.Genres = app.readCSV(qs, "genres", []string{})
 	input.Filters.Page = app.readInt(qs, "page", 1, v)
 	input.Filters.PageSize = app.readInt(qs, "page_size", 20, v)
-	input.Filters.Sort = app.readString(qs, "sort", "id")
 
-	// Check the Validator instance for any errors and use the failedValidationResponse()
-	// helper to send the client a response if necessary.
-	if !v.Valid() {
+	input.Filters.Sort = app.readString(qs, "sort", "id")
+	input.Filters.SortSafellist = []string{"id", "title", "year", "runtime", "-id", "-title", "-year", "-runtime"}
+
+	// Execute the validation checks on the Filters struct and send response containing the errors if necesary.
+	if data.ValidateFilters(v, input.Filters); !v.Valid() {
 		app.failedValidationResponse(w, r, v.Errors)
 		return
 	}
