@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 
+	"github.com/casp3rus/greenlight/internal/validator"
 	"github.com/julienschmidt/httprouter"
 )
 
-func (app *appllication) readIDParam(r *http.Request) (int64, error)  {
+func (app *appllication) readIDParam(r *http.Request) (int64, error) {
 	params := httprouter.ParamsFromContext(r.Context())
 
 	id, err := strconv.ParseInt(params.ByName("id"), 10, 64)
@@ -90,9 +92,45 @@ func (app *appllication) readJSON(w http.ResponseWriter, r *http.Request, dst an
 	}
 
 	err = dec.Decode(&struct{}{})
-	if err !=  io.EOF {
+	if err != io.EOF {
 		return errors.New("body must only contain a single JSON value")
 	}
 
 	return nil
+}
+
+func (app *appllication) readString(qs url.Values, key string, defaultValue string) string {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaultValue
+	}
+
+	return s
+}
+
+func (app *appllication) readCSV(qs url.Values, key string, defaultValue []string) []string {
+	csv := qs.Get(key)
+
+	if csv == "" {
+		return defaultValue
+	}
+
+	return strings.Split(csv, ",")
+}
+
+func (app *appllication) readInt(qs url.Values, key string, defaulValue int, v *validator.Validator) int {
+	s := qs.Get(key)
+
+	if s == "" {
+		return defaulValue
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		v.AddError(key, "must be an integer value")
+		return defaulValue
+	}
+
+	return i
 }
