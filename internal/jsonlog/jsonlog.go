@@ -77,15 +77,15 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 
 	// Declare an anonymous struct holding the data for the log entry.
 	aux := struct {
-		Level string `json:"level"`
-		Time string `json:"time"`
-		Message string `json:"message"`
+		Level      string            `json:"level"`
+		Time       string            `json:"time"`
+		Message    string            `json:"message"`
 		Properties map[string]string `json:"properties,omitempty"`
-		Trace string `json:"trace,omitempty"`
+		Trace      string            `json:"trace,omitempty"`
 	}{
-		Level: level.String(),
-		Time: time.Now().UTC().Format(time.RFC3339),
-		Message: message,
+		Level:      level.String(),
+		Time:       time.Now().UTC().Format(time.RFC3339),
+		Message:    message,
 		Properties: properties,
 	}
 
@@ -116,5 +116,3 @@ func (l *Logger) print(level Level, message string, properties map[string]string
 func (l *Logger) Write(message []byte) (n int, err error) {
 	return l.print(LevelError, string(message), nil)
 }
-
-
