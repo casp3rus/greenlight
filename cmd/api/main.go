@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"flag"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/casp3rus/greenlight/internal/data"
@@ -43,6 +44,7 @@ type appllication struct {
 	logger *jsonlog.Logger
 	models data.Models
 	mailer mailer.Mailer
+	wg     sync.WaitGroup
 }
 
 func main() {
