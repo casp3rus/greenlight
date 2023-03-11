@@ -13,6 +13,7 @@ import (
 
 var (
 	ErrDuplicateEmail = errors.New("duplicate email")
+	AnonymousUser     = &User{}
 )
 
 type User struct {
@@ -23,6 +24,10 @@ type User struct {
 	Password  password  `json:"-"`
 	Activated bool      `json:"activated"`
 	Version   int       `json:"-"`
+}
+
+func (u *User) IsAnonymous() bool {
+	return u == AnonymousUser
 }
 
 type password struct {
@@ -213,7 +218,7 @@ func (m UserModel) GetForToken(tokenScope, tokenPlaintext string) (*User, error)
 
 	var user User
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
 	// Execute the query scanning the results into a User struct.
