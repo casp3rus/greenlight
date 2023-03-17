@@ -75,3 +75,72 @@ func (app *appllication) createAuthenticationTokenHandler(w http.ResponseWriter,
 		app.serverErrorResponse(w, r, err)
 	}
 }
+
+// Generate a password reset token and send it to the user's email address.
+func (app *appllication) createPasswordResetTokenHandler(w http.ResponseWriter, r *http.Request) {
+	// Parse and validate the user's email address
+	var input struct {
+		Email string `json:"email"`
+	}
+
+	err := app.readJSON(w, r, &input)
+	if err != nil {
+		app.badRequestResponse(w, r, err)
+		return
+	}
+
+	v := validator.New()
+
+	if data.ValidateEmail(v, input.Email); !v.Valid() {
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Retrieve the user record for the email address.
+	// Return an error to the clinet if no user found.
+	user, err := app.models.Users.GetByEmail(input.Email)
+	if err != nil {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			v.AddError("email", "no matching email address found")
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
+	}
+
+	// Return an error message if the user is not activated.
+	if !user.Activated {
+		v.AddError("email", "user account must be activated")
+		app.failedValidationResponse(w, r, v.Errors)
+		return
+	}
+
+	// Create a new password reset token with a 30 minute expiry time.
+	token, err := app.models.Tokens.New(user.ID, 30*time.Minute, data.ScopePasswordReset)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+		return
+	}
+
+	// Email user the password reset token
+	app.background(func() {
+		data := map[string]any{
+			"passwordResetToken": token.Plaintext,
+		}
+
+		// Send the email using the address stored in the DB.
+		err = app.mailer.Send(user.Email, "token_password_reset.tmpl", data)
+		if err != nil {
+			app.logger.PrintError(err, nil)
+		}
+	})
+
+	// Send a 202 Accepted response and confirmation to the client.
+	env := envelope{"message": "an email will be sent to you containing password reset instructions"}
+
+	err = app.writeJSON(w, http.StatusAccepted, env, nil)
+	if err != nil {
+		app.serverErrorResponse(w, r, err)
+	}
+}
